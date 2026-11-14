@@ -39,6 +39,14 @@ def num_digits_fast(n: int) -> int:
     Find the number of digits in a number.
     abs() is used as logarithm for negative numbers is not defined.
 
+    The number of digits of a positive integer n is the only integer d with
+    10**(d - 1) <= n < 10**d, i.e. d = floor(log10(n)) + 1. math.log10() returns a
+    float, so it is only used to estimate d: just below a power of ten the
+    logarithm rounds up to a whole number and the estimate is one too large.
+    Comparing n with exact integer powers of ten corrects the estimate.
+    https://en.wikipedia.org/wiki/Logarithm#Applications
+    https://docs.python.org/3/tutorial/floatingpoint.html
+
     >>> num_digits_fast(12345)
     5
     >>> num_digits_fast(123)
@@ -53,6 +61,26 @@ def num_digits_fast(n: int) -> int:
     1
     >>> num_digits_fast(-123456)
     6
+    >>> num_digits_fast(10**15 - 3)
+    15
+    >>> num_digits_fast(10**15 - 2)  # log10() rounds up to exactly 15.0
+    15
+    >>> num_digits_fast(10**15 - 1)
+    15
+    >>> num_digits_fast(10**16 - 1)  # float(10**16 - 1) is already 1e+16
+    16
+    >>> num_digits_fast(-(10**16 - 1))
+    16
+    >>> num_digits_fast(10**16)
+    17
+    >>> num_digits_fast(10**400 - 1)  # too large to be converted to a float
+    400
+    >>> num_digits_fast(10**400)
+    401
+    >>> all(num_digits_fast(10**exponent - 1) == exponent for exponent in range(1, 400))
+    True
+    >>> all(num_digits_fast(10**exponent) == exponent + 1 for exponent in range(400))
+    True
     >>> num_digits_fast('123')  # Raises a TypeError for non-integer input
     Traceback (most recent call last):
         ...
@@ -60,7 +88,20 @@ def num_digits_fast(n: int) -> int:
     """
     if not isinstance(n, int):
         raise TypeError("Input must be an integer")
-    return 1 if n == 0 else math.floor(math.log10(abs(n)) + 1)
+    if n == 0:
+        return 1
+    n = abs(n)
+    # log10() works in floating point, so close to a power of ten the estimate
+    # can be off by one: the exact integer comparisons below correct it.
+    digits = math.floor(math.log10(n)) + 1
+    upper_bound = 10**digits
+    while upper_bound <= n:
+        digits += 1
+        upper_bound *= 10
+    while upper_bound // 10 > n:
+        digits -= 1
+        upper_bound //= 10
+    return digits
 
 
 def num_digits_faster(n: int) -> int:
