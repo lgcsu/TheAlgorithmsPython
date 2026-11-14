@@ -14,7 +14,7 @@ REPO = Path("/repo")
 TIMEOUT_SECONDS = 60
 MAX_OUTPUT_CHARS = 4000
 
-mcp = FastMCP("AlgoDevMCP", log_level="ERROR")
+mcp = FastMCP("AlgoDevMCP", log_level="INFO")
 
 
 def _resolve(path: str) -> Path:
